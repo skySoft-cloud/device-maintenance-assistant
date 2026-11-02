@@ -610,6 +610,17 @@ table.tbl{min-width:900px}
 .pgi:hover{background:var(--primary-t);color:var(--primary)}
 .pgi.on{background:var(--primary);border-color:var(--primary);color:#fff}
 .pagi .sel{margin-left:4px}
+/* ===== v7：功能说明标注 ===== */
+.spec-dot{position:fixed;z-index:960;width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 10px rgba(31,90,246,.45);transition:transform .15s;user-select:none}
+.spec-dot:hover{transform:scale(1.18)}
+.spec-hl{outline:1.5px dashed rgba(31,90,246,.55);outline-offset:3px;border-radius:8px}
+.spec-pop{position:fixed;z-index:961;width:336px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 44px rgba(15,32,68,.22);padding:13px 15px;animation:popIn .18s cubic-bezier(.22,.9,.3,1)}
+.spec-pop b{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--t1);padding-right:22px}
+.spec-pop .spec-n{width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-size:11px;display:grid;place-items:center;flex:none}
+.spec-pop p{font-size:12.5px;line-height:1.75;color:var(--t2);margin:8px 0 0}
+.spec-pop .sp-x{position:absolute;top:10px;right:10px;color:var(--t3);cursor:pointer;display:grid;place-items:center;width:22px;height:22px;border-radius:6px}
+.spec-pop .sp-x:hover{background:var(--line-2);color:var(--t1)}
+.hbtn.on{color:var(--primary);background:var(--primary-t);border-color:var(--primary-t)}
 
 /* ===== v5：全站滚动条精修 ===== */
 *{scrollbar-width:thin;scrollbar-color:#C3CDDD transparent}
@@ -806,6 +817,8 @@ table.tbl{min-width:900px}
       <button class="hbtn" id="sideToggle" title="收起/展开侧栏"><svg class="ic"><use href="#i-panel"/></svg></button>
       <div class="crumb"><span id="crumbMod">智能问答</span><span class="sep">/</span><span class="pg" id="crumbPg">问答模式</span></div>
       <div class="head-right">
+        <button class="hbtn" id="specBtn" title="功能说明标注（PRD）" onclick="SPEC.toggle()"><svg class="ic"><use href="#i-tag"/></svg></button>
+        <span class="vline"></span>
         <span class="env-chip"><span class="dot"></span>演示环境 · 数据已脱敏</span>
         <span class="vline"></span>
         <div class="head-user" id="headUser"><div class="avatar">张</div><div><b>张工</b><span>在线</span></div><svg class="ic xs" style="color:var(--t3)"><use href="#i-chev-d"/></svg></div>
@@ -829,7 +842,7 @@ table.tbl{min-width:900px}
       <div class="sess-h">
         <b>会话列表</b>
         <button class="add" title="新建会话" onclick="QA.addSession()"><svg class="ic xs"><use href="#i-plus"/></svg></button>
-        <button class="fold" title="折叠会话列表" onclick="document.getElementById('qaWrap').classList.toggle('sess-hide')"><svg class="ic xs" style="transform:rotate(180deg)"><use href="#i-chev-r"/></svg></button>
+        <button class="fold" title="折叠会话列表" onclick="QA.foldToggle()"><svg class="ic xs" style="transform:rotate(180deg)"><use href="#i-chev-r"/></svg></button>
       </div>
       <div class="sess-list" id="sessList"></div>
       <div style="padding:10px 14px;border-top:1px solid var(--line-2);font-size:11.5px;color:var(--t3);display:flex;align-items:center;gap:7px">
@@ -839,7 +852,7 @@ table.tbl{min-width:900px}
 
     <!-- 主对话区 -->
     <div class="qa-main">
-      <button class="sess-reopen" title="展开会话列表" onclick="document.getElementById('qaWrap').classList.remove('sess-hide')"><svg class="ic"><use href="#i-chev-r"/></svg></button>
+      <button class="sess-reopen" title="展开会话列表" onclick="QA.foldToggle()"><svg class="ic"><use href="#i-chev-r"/></svg></button>
       <div class="qa-scroll" id="qaScroll">
         <div class="mode-seg" id="modeSeg">
           <div class="mb on" data-mode="chat" onclick="QA.setMode('chat')"><svg class="ic"><use href="#i-chat"/></svg>问答模式</div>
@@ -1280,6 +1293,7 @@ $('#drawerMask').addEventListener('click',closeDrawer);
 /* ===== P1 修复：Escape 栈 + 键盘可达性 ===== */
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
+    if(SPEC.popOpen){SPEC.hidePop();return}
     if($('#mask').classList.contains('on')){closeModal();return}
     if($('#drawer').classList.contains('on')){closeDrawer();return}
     if(App.cur==='schema'&&$('#schDetail').style.display!=='none'){SCH.back();return}
@@ -2971,5 +2985,139 @@ $('#headUser').onclick=e=>showCtx(e.currentTarget,[
 QA.init();DS.render();DS.renderApi();PM.render();SCH.render();KG.render();KB.applyFilter();
 </script>
 
+<script>
+/* =============== 功能说明标注（PRD 区块级） =============== */
+const SPECS={
+qa:[
+ {t:'会话列表',d:'多会话管理：支持新建、重命名、置顶、多选删除与分享；历史会话自动持久化保存，可一键折叠侧栏扩大问答区。',sel:'.qa-wrap .sess'},
+ {t:'三种问答模式',d:'PRD 核心设计——① 问答模式：基于 RAG 的检索增强生成，面向一线维修人员；② 检索模式：知识精确检索与案例溯源，面向工程师；③ 新手模式：三步向导式故障排查引导，面向新员工。',sel:'#qaWrap .mode-seg'},
+ {t:'推荐问题',d:'基于知识图谱热点与历史高频问答自动生成的 TOP-3 推荐问题，点击即发起提问，降低冷启动成本。',sel:'#qaWrap .rec-qs'},
+ {t:'多模态输入区',d:'支持文本 / 图片 / 语音输入与文件上传（现场照片、报警截图）；Enter 发送、Shift+Enter 换行，输入时自动附带设备上下文。',sel:'#qaWrap .comp-card'},
+ {t:'AI 回答与溯源',d:'回答附带推理管线可视化（意图理解 → 知识检索 → 图谱推理 → 答案生成），引用知识图谱节点与关联案例，并给出维修建议；内容仅供参考，重要操作以现场规程为准。',sel:'#qaScroll'}
+],
+datasrc:[
+ {t:'双类型数据源',d:'文件管理（PDF 手册、维修记录等非结构化文档）与 API 接口管理（PHM / EAM / 点检系统等结构化数据）两类来源统一纳管，为 Schema 定义与图谱构建提供数据基础。',sel:'#dsTabs'},
+ {t:'组合筛选查询',d:'按文件 / 接口名称、类型、所属设备组合检索，支持关键字实时过滤。',sel:'#dsFilePane .filter-bar'},
+ {t:'数据接入操作',d:'文件页签：上传文档、批量上传；API 页签：新建接口并配置定时同步周期（每天 / 每小时 / 自定义），实现知识数据持续增量更新。',sel:'#dsFilePane .toolbar'},
+ {t:'同步状态追踪',d:'已同步 / 待同步 / 同步中 / 同步失败 四态可视；同步失败支持人工重试，保证知识库数据时效性。',sel:'#dsFilePane .tbl-wrap'}
+],
+prompt:[
+ {t:'模板筛选',d:'按提示词名称、类型（Schema 抽取 / 图谱关系抽取 / 问答生成 / 维修建议生成 / 案例总结）与启用状态组合检索。',sel:'#scr-prompt .filter-bar'},
+ {t:'模板管理操作',d:'新建提示词、提示词导入（JSON 批量导入）、批量启用 / 禁用；模板采用变量占位符设计，适配不同 LLM 场景。',sel:'#scr-prompt .toolbar'},
+ {t:'启用状态约束',d:'提示词启用后方可被 Schema 抽取、图谱构建、问答生成等模块引用；启用中的模板禁止删除，需先禁用，防止运行中的抽取任务失效。',sel:'#scr-prompt .tbl-wrap'}
+],
+schema:[
+ {t:'生命周期筛选',d:'按业务域（机器人 / 冲压机 / 空压机 / 通用设备）与状态检索 Schema。',sel:'#schList .filter-bar'},
+ {t:'状态机操作',d:'新建 Schema、提交审批、发布、废弃、删除——Schema 遵循 草稿 → 审批中 → 已审批 → 已发布 → 已废弃 的生命周期管理，已发布方可用于图谱构建。',sel:'#schList .toolbar'},
+ {t:'版本与规模',d:'列表展示 Schema 版本、实体 / 关系数量与创建人，支持多版本演进与规模评估。',sel:'#schList .tbl-wrap'}
+],
+'schema-detail':[
+ {t:'知识本体五视图',d:'实体类型 / 关系类型 / 实体 / 三元组 / 关键词 五个页签构成设备故障知识本体，支持手动维护与颜色配置。',sel:'#schTabs'},
+ {t:'类型定义规则',d:'每个实体类型可标记是否核心、配置图谱展示颜色并撰写定义说明，颜色规则同步应用于知识图谱可视化。',sel:'#schTabBox'},
+ {t:'审批与发布',d:'头部操作：保存草稿、提交审批、发布、图谱可视化，以及发起 LLM 自动抽取（选择数据源文件 + 启用中的提示词，抽取结果进入人工复核）。',sel:'#schDetail .acts'}
+],
+'schema-ext':[
+ {t:'数据源选择',d:'左侧树形勾选参与本次抽取的文档（可多选），支持按文件夹批量选择。',sel:'#schExtract .src-tree'},
+ {t:'抽取配置',d:'选择已发布 Schema 与启用中的提示词，拖拽或点选文件后开始抽取。',sel:'#schExtract .drop-big'},
+ {t:'抽取进度',d:'文档解析 → 实体抽取 → 关系抽取 → 三元组生成 → 人工复核 五阶段实时进度，支持查看抽取日志。',sel:'#schExtract .prog-card'}
+],
+kg:[
+ {t:'图谱状态管理',d:'与 Schema 一致的状态机（草稿 → 审批中 → 已发布 → 已停用），已发布图谱方可被 RAG 检索问答调用。',sel:'#kgList .toolbar'},
+ {t:'构建入口',d:'行内「构建图谱」进入自动构建流程：数据源 + Schema + 提示词三要素齐备后执行 LLM 抽取。',sel:'#kgList .tbl-wrap'}
+],
+'kg-build':[
+ {t:'数据源树',d:'勾选参与图谱构建的源文档，构建范围可控。',sel:'#kgBuild .src-tree'},
+ {t:'构建要素',d:'选择已发布 Schema 与启用中的图谱抽取提示词，确保实体关系模型一致。',sel:'#kgBuild .drop-big'},
+ {t:'构建进度',d:'五阶段构建流水线，完成后三元组写入图数据库并进入审批。',sel:'#kgBuild .prog-card'}
+],
+'kg-view':[
+ {t:'数据源溯源',d:'左侧树展示图谱来源文档，点击可定位该文档贡献的子图。',sel:'#kgView .src-tree'},
+ {t:'图谱画布',d:'力导向布局可视化：节点按实体类型着色，支持拖拽、缩放、点击节点查看属性与关联关系。',sel:'#gvCanvasWrap'},
+ {t:'类型图例过滤',d:'点击图例按节点类型显隐过滤，聚焦关注的子图。',sel:'#gvLegend'},
+ {t:'图谱工具',d:'AI 文本提取（从文档增量抽取写入图谱）、删除节点、保存版本变更。',sel:'#kgView .acts'}
+],
+kb:[
+ {t:'四维筛选',d:'设备分类、核心部件、故障现象、时间范围四个维度组合过滤案例，支持关键词标签快捷选择。',sel:'.kb-filter'},
+ {t:'智能检索',d:'支持故障代码（如 E-102）、现象描述、维护手册关键词的全文检索；热门查询直达高频场景。',sel:'#scr-kb .search-box'},
+ {t:'双视图浏览',d:'卡片视图（适合快速浏览案例摘要）与表格视图（适合批量比对）一键切换。',sel:'#kbTabCard'},
+ {t:'知识规模',d:'沉淀专家条目 1,284 条、关联案例 5,492 条，形成企业维修知识资产。',sel:'.kb-stat'}
+],
+gg:[
+ {t:'全局规模概览',d:'统计全平台图谱规模：514 个节点、366 条关系，跨设备、跨业务域的全景知识网络。',sel:'#scr-gg .gg-stats'},
+ {t:'类型过滤图例',d:'点击节点类型（设备 / 部件 / 故障 / 现象 / 措施 / 文档等）或关系类型，动态过滤画布显示。',sel:'#scr-gg .gg-legend-bar'},
+ {t:'全局画布',d:'力导向布局展示全量图谱，支持拖拽、缩放、悬停高亮邻居节点、点击查看详情。',sel:'#scr-gg .gg-canvas-big'},
+ {t:'视图工具',d:'布局算法切换、显示数量限制、节点搜索定位，便于从宏观到微观逐层下钻。',sel:'#scr-gg .gv-tools'}
+]
+};
+const SPEC={
+  on:false,popOpen:false,
+  toggle(){
+    this.on=!this.on;
+    const b=$('#specBtn');if(b)b.classList.toggle('on',this.on);
+    this.apply();
+    toast(this.on?'功能说明标注已开启：点击编号查看说明':'功能说明标注已关闭',this.on?'ok':'info');
+  },
+  key(){
+    const c=App.cur||'qa';
+    if(c==='schema')return $('#schDetail').style.display!=='none'?'schema-detail':($('#schExtract').style.display!=='none'?'schema-ext':'schema');
+    if(c==='kg')return $('#kgBuild').style.display!=='none'?'kg-build':($('#kgView').style.display!=='none'?'kg-view':'kg');
+    return c;
+  },
+  hidePop(){this.popOpen=false;const p=$('#specPop');if(p)p.remove()},
+  clear(){
+    $$('.spec-dot').forEach(d=>d.remove());
+    $$('.spec-hl').forEach(el=>el.classList.remove('spec-hl'));
+    this.hidePop();
+  },
+  apply(){
+    this.clear();
+    if(!this.on)return;
+    const list=SPECS[this.key()]||[];
+    let n=0;
+    list.forEach((sp,i)=>{
+      const el=document.querySelector(sp.sel);
+      if(!el||!el.getClientRects().length)return;
+      const r=el.getBoundingClientRect();
+      if(r.width<60||r.height<30)return;
+      n++;
+      el.classList.add('spec-hl');
+      const dot=document.createElement('div');
+      dot.className='spec-dot';dot.textContent=n;dot.title=sp.t;
+      dot.style.left=(r.left+6)+'px';dot.style.top=(r.top+6)+'px';
+      dot.onclick=e=>{e.stopPropagation();this.showPop(sp,dot)};
+      document.body.appendChild(dot);
+    });
+  },
+  showPop(sp,dot){
+    this.hidePop();this.popOpen=true;
+    const p=document.createElement('div');
+    p.className='spec-pop';p.id='specPop';
+    p.innerHTML=`<b><span class="spec-n">${dot.textContent}</span>${sp.t}</b><p>${sp.d}</p><div class="sp-x" onclick="SPEC.hidePop()">${ic('close','ic xs')}</div>`;
+    document.body.appendChild(p);
+    const pw=336,ph=p.offsetHeight||130,vw=innerWidth,vh=innerHeight;
+    let x=dot.offsetLeft+30,y=dot.offsetTop-10;
+    if(x+pw>vw-12)x=dot.offsetLeft-pw-14;
+    if(x<12)x=12;
+    if(y+ph>vh-12)y=vh-ph-12;
+    if(y<12)y=12;
+    p.style.left=x+'px';p.style.top=y+'px';
+  }
+};
+document.addEventListener('click',e=>{
+  if(!SPEC.on)return;
+  if(e.target.closest('.spec-dot')||e.target.closest('.spec-pop'))return;
+  SPEC.hidePop();
+});
+addEventListener('resize',()=>{if(SPEC.on)SPEC.apply()});
+
+/* 子视图/面板切换后重算标注 */
+function SPEC_APPLY_LATER(ms){setTimeout(()=>{if(SPEC.on)SPEC.apply()},ms||60)}
+['openDetail','openExtract','back'].forEach(f=>{const o=SCH[f];if(o)SCH[f]=function(...a){const r=o.apply(this,a);SPEC_APPLY_LATER(60);return r}});
+['openBuild','goView','back','gvTab','goDetail'].forEach(f=>{const o=KG[f];if(o)KG[f]=function(...a){const r=o.apply(this,a);SPEC_APPLY_LATER(120);return r}});
+{const o=DS.tab;DS.tab=function(...a){const r=o.apply(this,a);SPEC_APPLY_LATER(60);return r}}
+{const o=KB.view;KB.view=function(...a){const r=o.apply(this,a);SPEC_APPLY_LATER(60);return r}}
+{const o=QA.setMode;QA.setMode=function(...a){const r=o.apply(this,a);SPEC_APPLY_LATER(60);return r}}
+QA.foldToggle=function(){document.getElementById('qaWrap').classList.toggle('sess-hide');SPEC_APPLY_LATER(300)};
+</script>
 </body>
 </html>
