@@ -625,6 +625,8 @@ table.tbl{min-width:900px}
 .spec-pop .sp-div{margin-top:11px;padding-top:10px;border-top:1px dashed var(--line-2)}
 .spec-pop .sp-lab{display:inline-block;font-size:11px;font-weight:600;color:var(--primary);background:var(--primary-t);padding:2px 9px;border-radius:6px;letter-spacing:.5px}
 .spec-pop .sp-div p{margin-top:7px;font-size:12px;line-height:1.7;color:var(--t2)}
+.spec-pop .sp-rows{margin-top:7px;display:flex;flex-direction:column;gap:5px}
+.spec-pop .sp-row{font-size:12px;line-height:1.6;color:var(--t2);padding:6px 9px;background:var(--line-1,#F4F6FA);border-radius:7px}
 .spec-pop .sp-note{color:var(--t3);font-size:11px}
 
 /* ===== v5：全站滚动条精修 ===== */
@@ -2991,67 +2993,57 @@ QA.init();DS.render();DS.renderApi();PM.render();SCH.render();KG.render();KB.app
 </script>
 
 <script>
-/* =============== 功能说明标注（PRD 区块级） =============== */
+/* =============== 功能说明标注（内容引用 PRD 原文） =============== */
 const SPECS={
 qa:[
- {t:'会话列表',d:'多会话管理：支持新建、重命名、置顶、多选删除与分享；历史会话自动持久化保存，可一键折叠侧栏扩大问答区。',api:'GET /api/conversations 拉取会话列表，POST 新建、PATCH /{id} 重命名/置顶、DELETE 批量删除；消息按会话 id 分页加载。',sel:'.qa-wrap .sess'},
- {t:'三种问答模式',d:'PRD 核心设计——① 问答模式：基于 RAG 的检索增强生成，面向一线维修人员；② 检索模式：知识精确检索与案例溯源，面向工程师；③ 新手模式：三步向导式故障排查引导，面向新员工。',api:'切换为前端状态；三种模式分别调用不同推理服务：/api/chat（RAG 生成）、/api/search（检索溯源）、/api/guide（新手引导）。',sel:'#qaWrap .mode-seg'},
- {t:'推荐问题',d:'基于知识图谱热点与历史高频问答自动生成的 TOP-3 推荐问题，点击即发起提问，降低冷启动成本。',api:'GET /api/chat/suggestions?deviceId= 由热点统计服务生成；点击后将问题文本组装为提问请求，无需二次接口。',sel:'#qaWrap .rec-qs'},
- {t:'多模态输入区',d:'支持文本 / 图片 / 语音输入与文件上传（现场照片、报警截图）；Enter 发送、Shift+Enter 换行，输入时自动附带设备上下文。',api:'POST /api/chat/messages（multipart：文本/图片/语音）；图片先走对象存储预签名 URL 直传，消息体仅存引用。',sel:'#qaWrap .comp-card'},
- {t:'AI 回答与溯源',d:'回答附带推理管线可视化（意图理解 → 知识检索 → 图谱推理 → 答案生成），引用知识图谱节点与关联案例，并给出维修建议；内容仅供参考，重要操作以现场规程为准。',api:'POST /api/chat（SSE 流式返回），响应携带 citations（图谱节点引用）、pipeline（推理阶段）、suggestions（维修建议）；「采纳建议」回调 POST /api/cases 写入维修知识库，形成知识沉淀闭环。',sel:'#qaScroll'}
+ {t:'三种问答模式',d:'问答/检索模式包含存量问答/检索和增量问答/检索模式（PRD 4.1.1）。类似 DeepSeek、豆包、元宝这些产品操作交互逻辑，输入问题，进行问答，进行知识图谱检索和内容生成，形成会话历史记录。检索模式：输入问题，自动检索故障知识图谱里面的相关内容，生成案例详情（故障现场-原因分析-处理措施-处理结果），左侧显示图谱信息，相似案例的可信度90%；检索不到历史知识库中的相关内容时，单向路由在互联网上进行检索，根据提示词生成相关答案，人工审核进行保存，形成维修数据库。',api:['1 问答模式 · 按钮 · 单击 → 切换到问答模式（高亮蓝色）','2 检索模式 · 按钮 · 单击 → 切换到检索模式（高亮蓝色）','3 新手模式 · 按钮 · 单击 → 切换到新手模式（高亮蓝色）'],sel:'#qaWrap .mode-seg'},
+ {t:'会话历史与列表',d:'问答过程形成会话历史记录，支持会话的添加与折叠总览。',api:['7 会话历史总览 · 添加/折叠 · 单击 → 自动添加会话/收起会话','8 会话（列表） · 按钮 · 单击 → 弹窗显示（重命名、置顶、分享、多选、删除）'],sel:'.qa-wrap .sess'},
+ {t:'推荐问题',d:'TOP-3 高频故障问题，选中后直接进行问答，不需要输入。',api:['6 机器人故障有哪些（top-3 故障） · 按钮 · 单击 → 选中后，在模式中直接进行问答，不需要输入'],sel:'#qaWrap .rec-qs'},
+ {t:'文本与图片输入',d:'支持文本与图片输入（PRD 页面说明：文本、图片按钮）。',api:['4 文本 · 按钮 · 单击','5 图片 · 按钮 · 单击','字段说明：文本输入 · 文本 · <1000字 · 手工输入'],sel:'#qaWrap .comp-card'},
+ {t:'AI 回答与维修建议',d:'问答模式中，需要展示知识图谱生成的细节：提取的关键词标签、所检索的知识图谱实体、图谱可视化、历史关联案例、维修建议 TOP-3 内容+可信度。维修建议生成后可以选择保存。',api:['9 维修建议保存 · 按钮 · 单击 → 选择维修建议进入会话中','10 会话中保存 · 按钮 · 单击 → 保存至维修历史库中','字段说明：问题生成 · 提取关键词 · <20个 · 知识图谱图数据库','字段说明：知识图谱实体 / 图谱可视化 · 表格 / 图表 · 知识图谱图数据库','字段说明：维修建议 · TOP-3 建议 · 知识图谱图数据库'],sel:'#qaScroll'},
+ {t:'新手模式引导',d:'新手模式 SOP：帮助新手了解和熟悉维修步骤和流程的引导式交互页面。选择新手模式，输入设备名称，在设备故障知识库中进行索引（检索不到设备则显示无该设备）；显示该设备 TOP-20 的故障字段，选择字段进行诊断，显示故障原因（TOP-5），再选择一个故障原因切换到解决措施（TOP-5），选择一个解决措施后显示维修步骤（TOP-10）。',api:['3 请输入设备名称 · 文本 · Enter键 → 跳转设备诊断页面','4 开始诊断 · 按钮 · 单击 → 显示下方故障原因','5 故障原因列表 · 文本/按钮 · 单击 → 下一步解决措施','6 解决措施列表 · 文本/按钮 · 单击 → 下一步维护步骤','7 返回 · 按钮 · 单击 → 返回上一步','8 退出 · 按钮 · 单击 → 退出全部内容','字段说明：故障报警码 · 标签 · TOP20 · 数据库','字段说明：维修步骤 · 文本 · TOP-10 步骤 · 数据库'],sel:'.ns-hero,.ns-panel'}
 ],
 datasrc:[
- {t:'双类型数据源',d:'文件管理（PDF 手册、维修记录等非结构化文档）与 API 接口管理（PHM / EAM / 点检系统等结构化数据）两类来源统一纳管，为 Schema 定义与图谱构建提供数据基础。',api:'数据链路全景：数据源 → Schema 定义 → LLM 抽取 → 知识图谱 → RAG 问答 → 建议采纳入库 → 维修知识库（闭环）。文件与接口分别为 GET /api/files、GET /api/datasources/apis。',sel:'#dsTabs'},
- {t:'组合筛选查询',d:'按文件 / 接口名称、类型、所属设备组合检索，支持关键字实时过滤。',api:'GET /api/files?kw=&type=&device=（服务端过滤 + 分页）；筛选条件变化即重新请求。',sel:'#dsFilePane .filter-bar'},
- {t:'数据接入操作',d:'文件页签：上传文档、批量上传；API 页签：新建接口并配置定时同步周期（每天 / 每小时 / 自定义），实现知识数据持续增量更新。',api:'POST /api/files/upload（multipart，支持批量），上传成功自动触发解析任务；POST /api/datasources/apis 创建接口源并注册定时同步。',sel:'#dsFilePane .toolbar'},
- {t:'同步状态追踪',d:'已同步 / 待同步 / 同步中 / 同步失败 四态可视；同步失败支持人工重试，保证知识库数据时效性。',api:'列表状态由同步任务服务回写：GET /api/files?status= 轮询刷新；失败重试 POST /api/files/{id}/sync。',sel:'#dsFilePane .tbl-wrap'}
+ {t:'双类型数据源',d:'数据源管理分为两块：一块是非结构化的文本文件（通过手工上传的文件），第二块是结构化的系统数据——通过 API 接口同步过来的数据（PHM 预测性维护系统、EAM 设备资产管理系统等，以及增量保存的互联网生成的问答知识库数据）。该模块用于管理相关数据源，进行数据源的命名和管理，便于后面 Schema 定义、知识抽取、知识图谱构建。',api:['1 文件夹管理 · TAB页按钮 · 单击 → 切换到当前页面（高亮蓝色）','2 API接口管理 · TAB页按钮 · 单击 → 切换到当前页面（高亮蓝色）'],sel:'#dsTabs'},
+ {t:'文件与接口管理操作',d:'文件管理包含文件上传、文件基础信息命名、文件编辑；API 接口管理同样如此，包含 API 接口命名、拉取地址、定时同步时间等。',api:['3 上传文件 · 按钮 · 单击 → 弹窗到文件上传页面，上传文件','4 批量上传 · 按钮 · 单击 → 弹窗到文件上传页面，批量上传文件','5 保存 · 文件上传保存 → 填写基础信息，上传文件保存；保存成功返回主页，形成一个记录','6 取消 · 文件上传取消 → 取消','7 API接口新建 · 按钮 · 单击 → 弹窗','8 API接口信息填写保存 · 单击 → 保存 API 接口信息，形成 API 接口信息记录'],sel:'#dsFilePane .toolbar'}
 ],
 prompt:[
- {t:'模板筛选',d:'按提示词名称、类型（Schema 抽取 / 图谱关系抽取 / 问答生成 / 维修建议生成 / 案例总结）与启用状态组合检索。',api:'GET /api/prompts?type=&status=，类型枚举与抽取模块共用同一字典。',sel:'#scr-prompt .filter-bar'},
- {t:'模板管理操作',d:'新建提示词、提示词导入（JSON 批量导入）、批量启用 / 禁用；模板采用变量占位符设计，适配不同 LLM 场景。',api:'POST /api/prompts 新建、POST /api/prompts/import 批量导入、PUT /api/prompts/batch-status 批量启停。',sel:'#scr-prompt .toolbar'},
- {t:'启用状态约束',d:'提示词启用后方可被 Schema 抽取、图谱构建、问答生成等模块引用；启用中的模板禁止删除，需先禁用，防止运行中的抽取任务失效。',api:'PUT /api/prompts/{id}/status 切换状态；启用中删除由后端校验拦截（返回业务错误码，前端提示先禁用）。',sel:'#scr-prompt .tbl-wrap'}
+ {t:'提示词新建',d:'新建提示词：点击新建提示词，弹窗跳转到新建页面，填写提示词名称、类型、提示词内容，进行保存，生成一条提示词记录。建立提示词模板，用于 Schema 抽取、知识图谱、问答生成的模板。'},
+ {t:'启用状态约束',d:'生成提示词记录后，对提示词进行启用，提示词就可以被 Schema、知识图谱构建、LLM 问答时使用。启用后不能直接删除，必须在禁用后才能删除。',sel:'#scr-prompt .tbl-wrap'}
 ],
 schema:[
- {t:'生命周期筛选',d:'按业务域（机器人 / 冲压机 / 空压机 / 通用设备）与状态检索 Schema。',api:'GET /api/schemas?domain=&status=（服务端过滤分页）。',sel:'#schList .filter-bar'},
- {t:'状态机操作',d:'新建 Schema、提交审批、发布、废弃、删除——Schema 遵循 草稿 → 审批中 → 已审批 → 已发布 → 已废弃 的生命周期管理，已发布方可用于图谱构建。',api:'POST /api/schemas 新建；POST /api/schemas/{id}/submit、/publish、/deprecate 驱动状态机；DELETE 仅草稿/已废弃可删（后端校验）。',sel:'#schList .toolbar'},
- {t:'版本与规模',d:'列表展示 Schema 版本、实体 / 关系数量与创建人，支持多版本演进与规模评估。',api:'实体/关系数量由列表接口聚合返回；点击「查看」加载 GET /api/schemas/{id}（含五类本体计数）。',sel:'#schList .tbl-wrap'}
+ {t:'Schema 新建与状态',d:'Schema 定义通过建立基础信息，选择提示词和相关的文件，手动建立和自动抽取（人工复核），然后设备专家进行审批，之后才能进行 Schema 的使用。新建方式有两种：手动模式、自动抽取模式，建议选择自动模式。Schema 完成新建后为草稿状态，可进行 审批/审批中/已审批、发布/已发布、废弃 几种状态。',api:['1 新建Schema · 按钮 · 单击 → 弹窗新建页面','2 Schema · 按钮 · 保存 → 保存 Schema 信息'],sel:'#schList .toolbar'},
+ {t:'审批 / 发布 / 废弃',d:'新建好 Schema 后进行审批流程，设备专家/管理人员进行审核，完成审核的可以进行发布，在知识图谱抽取就可以直接使用。',api:['3 审批 · 按钮 · 单击 → 选择一条已经完成的 Schema 进行审批','4 发布 · 按钮 · 单击 → 状态显示审批完成，就可以进行发布，发布完成为已发布','5 废弃 · 按钮 · 单击 → 对一条进行废除，如果需要启用需要重新审批','8 查看 · 按钮 · 单击 → 跳转到实体-关系-三元组详细页面'],sel:'#schList .tbl-wrap'}
 ],
 'schema-detail':[
- {t:'知识本体五视图',d:'实体类型 / 关系类型 / 实体 / 三元组 / 关键词 五个页签构成设备故障知识本体，支持手动维护与颜色配置。',api:'五类本体各自 CRUD：GET/POST /api/schemas/{id}/entities|relations|triples|keywords，页签内增删改即时保存。',sel:'#schTabs'},
- {t:'类型定义规则',d:'每个实体类型可标记是否核心、配置图谱展示颜色并撰写定义说明，颜色规则同步应用于知识图谱可视化。',api:'颜色与核心标记随实体类型保存（PUT），图谱可视化服务读取同一配置，保证两端渲染一致。',sel:'#schTabBox'},
- {t:'审批与发布',d:'头部操作：保存草稿、提交审批、发布、图谱可视化，以及发起 LLM 自动抽取（选择数据源文件 + 启用中的提示词，抽取结果进入人工复核）。',api:'PUT 保存草稿、POST /submit 进入审批流、POST /publish 冻结基线；自动抽取 POST /api/extract/jobs（异步任务）。',sel:'#schDetail .acts'}
+ {t:'实体-关系-三元组维护',d:'Schema 手动建立模式：实体类型建立、关系类型建立（Tab 页切换到关系）、实体新建 / 导入实体、三元组新建。',api:['8 查看 · 按钮 · 单击 → 跳转到实体-关系-三元组详细页面'],sel:'#schTabs'},
+ {t:'手动 / 自动两种模式',d:'手动模式对于比较熟悉的设备实体信息比较好可以使用。自动抽取是选择文件和提示词进行 Schema 抽取，然后对实体类型、关系、三元组进行审核和编辑的过程。',api:['6 文件/API接口 · Tab/按钮 · 单击 → 选择内容（自动构建 Schema）','7 文件/api接口 · 树状结构 · 可以被拖动'],sel:'#schTabBox'},
+ {t:'审批后投入使用',d:'设备专家/管理人员进行审核，完成审核的可以进行发布，在知识图谱抽取中直接使用。',sel:'#schDetail .acts'}
 ],
 'schema-ext':[
- {t:'数据源选择',d:'左侧树形勾选参与本次抽取的文档（可多选），支持按文件夹批量选择。',api:'GET /api/files/tree 拉取文件夹树；勾选集合随任务提交。',sel:'#schExtract .src-tree'},
- {t:'抽取配置',d:'选择已发布 Schema 与启用中的提示词，拖拽或点选文件后开始抽取。',api:'创建任务 POST /api/extract/jobs {fileIds, schemaId, promptId}；校验 Schema 已发布、提示词已启用。',sel:'#schExtract .drop-big'},
- {t:'抽取进度',d:'文档解析 → 实体抽取 → 关系抽取 → 三元组生成 → 人工复核 五阶段实时进度，支持查看抽取日志。',api:'GET /api/extract/jobs/{id}/progress 轮询（或 WebSocket 推送），五阶段状态机；「查看日志」GET /{id}/logs。',sel:'#schExtract .prog-card'}
+ {t:'数据源选择',d:'自动抽取模式：选择文件和提示词进行 Schema 抽取。',api:['6 文件/API接口 · Tab/按钮 · 单击 → 选择内容（自动构建 Schema）','7 文件/api接口 · 树状结构 · 可以被拖动'],sel:'#schExtract .src-tree'},
+ {t:'抽取与人工复核',d:'自动抽取（人工复核）：抽取完成后对实体类型、关系、三元组进行审核和编辑的过程。',sel:'#schExtract .prog-card'}
 ],
 kg:[
- {t:'图谱状态管理',d:'与 Schema 一致的状态机（草稿 → 审批中 → 已发布 → 已停用），已发布图谱方可被 RAG 检索问答调用。',api:'状态机接口同 Schema（/api/graphs/{id}/submit|publish|disable）；已发布图谱注册至 RAG 检索服务方可被问答调用。',sel:'#kgList .toolbar'},
- {t:'构建入口',d:'行内「构建图谱」进入自动构建流程：数据源 + Schema + 提示词三要素齐备后执行 LLM 抽取。',api:'POST /api/graphs/{id}/build 触发构建任务；构建要素缺失时后端返回可操作提示。',sel:'#kgList .tbl-wrap'}
+ {t:'知识图谱新建',d:'新建知识图谱，填写基础信息（图谱名称、编码、业务域、版本、标签等）进行保存成记录。知识图谱分为三块：一块是新建，一块是图谱构建，一块是图谱查看和编辑构建。'},
+ {t:'构建入口与状态流转',d:'在记录中选择构建图谱，跳转到子页面进行图谱的构建。构建图谱完成后为草稿，需要进行审批（审批中/已审批），审批完成后进行发布（已发布），停用后需要重新审批。启用后就可以被 RAG 检索，进行问答，生成比较精准的答案。',sel:'#kgList .tbl-wrap'}
 ],
 'kg-build':[
- {t:'数据源树',d:'勾选参与图谱构建的源文档，构建范围可控。',api:'GET /api/files/tree；勾选集合随构建任务提交。',sel:'#kgBuild .src-tree'},
- {t:'构建要素',d:'选择已发布 Schema 与启用中的图谱抽取提示词，确保实体关系模型一致。',api:'POST /api/graphs/build-jobs {fileIds, schemaId, promptId}；要素约束与抽取任务一致。',sel:'#kgBuild .drop-big'},
- {t:'构建进度',d:'五阶段构建流水线，完成后三元组写入图数据库并进入审批。',api:'GET /api/graphs/build-jobs/{id}/progress 五阶段轮询；完成后三元组写入图数据库并触发审批通知。',sel:'#kgBuild .prog-card'}
+ {t:'构建要素选择',d:'图谱构建页面选择需要构建图谱的文件/API接口名称，选择 Schema，选择提示词，然后进行抽取。',sel:'#kgBuild .src-tree'},
+ {t:'抽取进度',d:'显示抽取进度，完成后可以查看图谱和编辑图谱。',sel:'#kgBuild .prog-card'}
 ],
 'kg-view':[
- {t:'数据源溯源',d:'左侧树展示图谱来源文档，点击可定位该文档贡献的子图。',api:'GET /api/graphs/{id}/sources 返回来源文档及其贡献子图统计。',sel:'#kgView .src-tree'},
- {t:'图谱画布',d:'力导向布局可视化：节点按实体类型着色，支持拖拽、缩放、点击节点查看属性与关联关系。',api:'GET /api/graphs/{id}/subgraph?center=&depth= 按需加载子图；前端力导向渲染，节点属性点击时懒加载。',sel:'#gvCanvasWrap'},
- {t:'类型图例过滤',d:'点击图例按节点类型显隐过滤，聚焦关注的子图。',api:'纯前端过滤（对已加载子图显隐），无需额外请求。',sel:'#gvLegend'},
- {t:'图谱工具',d:'AI 文本提取（从文档增量抽取写入图谱）、删除节点、保存版本变更。',api:'AI 文本提取 POST /api/graphs/{id}/extract-text；删除节点 DELETE /{id}/nodes/{nid}（校验引用）；保存 PUT /{id}/version。',sel:'#kgView .acts'}
+ {t:'图谱查看与编辑',d:'抽取完成后可以查看图谱和编辑图谱。',sel:'#gvCanvasWrap'},
+ {t:'提取文本信息',d:'显示提取的文本信息。',sel:'#gvTextPane'}
 ],
 kb:[
- {t:'四维筛选',d:'设备分类、核心部件、故障现象、时间范围四个维度组合过滤案例，支持关键词标签快捷选择。',api:'GET /api/cases/facets 返回筛选项聚合计数；选择后 GET /api/cases?facets= 联动刷新。',sel:'.kb-filter'},
- {t:'智能检索',d:'支持故障代码（如 E-102）、现象描述、维护手册关键词的全文检索；热门查询直达高频场景。',api:'GET /api/cases?kw=（全文检索，命中故障代码/现象/手册关键词）；热门查询为预置检索式。',sel:'#scr-kb .search-box'},
- {t:'双视图浏览',d:'卡片视图（适合快速浏览案例摘要）与表格视图（适合批量比对）一键切换。',api:'同一数据源两种前端渲染，不重复请求。',sel:'#kbTabCard'},
- {t:'知识规模',d:'沉淀专家条目 1,284 条、关联案例 5,492 条，形成企业维修知识资产。',api:'GET /api/cases/stats 聚合统计；案例详情 GET /api/cases/{id}。',sel:'.kb-stat'}
+ {t:'查询与检索',d:'维修知识库是问答形成的，以及按照固定格式上传形成的。包含设备名称、编码、设备部件、故障名称、故障原因、维修建议等等，同时包含上传时间、上传人名字等。可以根据设备、部件、设备故障等内容进行查询和检索。',sel:'.kb-filter'},
+ {t:'视图与图表模式',d:'显示为视图模式和图表模式（两类）。',sel:'#kbTabCard'}
 ],
 gg:[
- {t:'全局规模概览',d:'统计全平台图谱规模：514 个节点、366 条关系，跨设备、跨业务域的全景知识网络。',api:'GET /api/graphs/overview 返回节点/关系总量与各类型分布。',sel:'#scr-gg .gg-stats'},
- {t:'类型过滤图例',d:'点击节点类型（设备 / 部件 / 故障 / 现象 / 措施 / 文档等）或关系类型，动态过滤画布显示。',api:'纯前端过滤已加载数据；类型枚举随 overview 返回。',sel:'#scr-gg .gg-legend-bar'},
- {t:'全局画布',d:'力导向布局展示全量图谱，支持拖拽、缩放、悬停高亮邻居节点、点击查看详情。',api:'GET /api/graphs/global?limit= 拉取全量子图；增量更新走 WebSocket 推送。',sel:'#scr-gg .gg-canvas-big'},
- {t:'视图工具',d:'布局算法切换、显示数量限制、节点搜索定位，便于从宏观到微观逐层下钻。',api:'布局与数量限制为前端态；搜索定位 GET /api/graphs/global?node=，命中节点居中高亮。',sel:'#scr-gg .gv-tools'}
+ {t:'全局图谱统计',d:'显示节点总数，关系总数，实体总数，三元组数量。',sel:'#scr-gg .gg-stats'},
+ {t:'节点与关系类型',d:'节点类型、关系类型显示。',sel:'#scr-gg .gg-legend-bar'},
+ {t:'全局图谱可视化',d:'构建的全部知识图谱显示图，全局图谱内容可视化。然后可以对设备、部件、关系、实体等内容进行查询，显示图谱。',sel:'#scr-gg .gg-canvas-big'}
 ]
 };
 const SPEC={
@@ -3060,7 +3052,7 @@ const SPEC={
     this.on=!this.on;
     const b=$('#specBtn');if(b)b.classList.toggle('on',this.on);
     this.apply();
-    toast(this.on?'功能说明标注已开启：点击编号查看说明':'功能说明标注已关闭',this.on?'ok':'info');
+    toast(this.on?'功能说明标注已开启：点击编号查看 PRD 说明':'功能说明标注已关闭',this.on?'ok':'info');
   },
   key(){
     const c=App.cur||'qa';
@@ -3098,7 +3090,7 @@ const SPEC={
     const p=document.createElement('div');
     p.className='spec-pop';p.id='specPop';
     p.innerHTML=`<b><span class="spec-n">${dot.textContent}</span>${sp.t}</b><p>${sp.d}</p>`
-      +(sp.api?`<div class="sp-div"><span class="sp-lab">数据交互</span><p>${sp.api}<span class="sp-note">（建议接口约定，供研发交接参考）</span></p></div>`:'')
+      +(sp.api&&sp.api.length?`<div class="sp-div"><span class="sp-lab">数据交互说明 · PRD 原文</span><div class="sp-rows">${sp.api.map(r=>`<div class="sp-row">${r}</div>`).join('')}</div></div>`:'')
       +`<div class="sp-x" onclick="SPEC.hidePop()">${ic('close','ic xs')}</div>`;
     document.body.appendChild(p);
     const pw=336,ph=p.offsetHeight||130,vw=innerWidth,vh=innerHeight;
