@@ -614,7 +614,7 @@ table.tbl{min-width:900px}
 .spec-dot{position:fixed;z-index:960;width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 10px rgba(31,90,246,.45);transition:transform .15s;user-select:none}
 .spec-dot:hover{transform:scale(1.18)}
 .spec-hl{outline:1.5px dashed rgba(31,90,246,.55);outline-offset:3px;border-radius:8px}
-.spec-pop{position:fixed;z-index:961;width:336px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 44px rgba(15,32,68,.22);padding:13px 15px;animation:popIn .18s cubic-bezier(.22,.9,.3,1)}
+.spec-pop{position:fixed;z-index:961;width:336px;max-height:74vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 44px rgba(15,32,68,.22);padding:13px 15px;animation:popIn .18s cubic-bezier(.22,.9,.3,1)}
 .spec-pop b{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--t1);padding-right:22px}
 .spec-pop .spec-n{width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-size:11px;display:grid;place-items:center;flex:none}
 .spec-pop p{font-size:12.5px;line-height:1.75;color:var(--t2);margin:8px 0 0}
@@ -627,6 +627,7 @@ table.tbl{min-width:900px}
 .spec-pop .sp-div p{margin-top:7px;font-size:12px;line-height:1.7;color:var(--t2)}
 .spec-pop .sp-rows{margin-top:7px;display:flex;flex-direction:column;gap:5px}
 .spec-pop .sp-row{font-size:12px;line-height:1.6;color:var(--t2);padding:6px 9px;background:var(--line-1,#F4F6FA);border-radius:7px}
+.spec-pop .sp-omit{margin-top:10px;padding:8px 11px;font-size:11.5px;color:var(--t3);background:var(--line-1,#F4F6FA);border-radius:7px}
 .spec-pop .sp-note{color:var(--t3);font-size:11px}
 
 /* ===== v5：全站滚动条精修 ===== */
@@ -2993,57 +2994,72 @@ QA.init();DS.render();DS.renderApi();PM.render();SCH.render();KG.render();KB.app
 </script>
 
 <script>
-/* =============== 功能说明标注（内容引用 PRD 原文） =============== */
+/* =============== 功能说明标注（全量引用 PRD 原文表格） =============== */
+/* PRD 原文表格：每页完整收录「页面说明 / 数据交互说明」与「数据字段说明」，无删减 */
+const PRTAB={
+qa:{desc:'类似 DeepSeek、豆包、元宝这些操作交互逻辑，输入问题，进行问答，进行知识图谱检索和内容生成，形成会话历史记录。而问答模式中，需要展示知识图谱生成的细节，提取的关键词标签，所检索的知识图谱实体，图谱可视化，历史关联案例，维修建议 TOP-3 的维修建议内容+可信度 50%。维修建议生成后可以选择保存。',
+ inter:['1 问答模式 · 按钮 · 单击 → 切换到问答模式（高亮蓝色）','2 检索模式 · 按钮 · 单击 → 切换到检索模式（高亮蓝色）','3 新手模式 · 按钮 · 单击 → 切换到新手模式（高亮蓝色）','4 文本 · 按钮 · 单击 → 切换到新手模式（高亮蓝色）〔PRD 原文如此〕','5 图片 · 按钮 · 单击 → 切换到新手模式（高亮蓝色）〔PRD 原文如此〕','6 机器人故障有哪些（top-3 故障） · 按钮 · 单击 → 选中后，在模式中直接进行问答，不需要输入','7 会话历史总览 · 添加/折叠 · 单击 → 自动添加会话/收起会话','8 会话（列表） · 按钮 · 单击 → 弹窗显示（重命名、置顶、分享、多选、删除）','9 维修建议保存 · 按钮 · 单击 → 选择维修建议进入会话中','10 会话中保存 · 按钮 · 单击 → 保存至维修历史库中'],
+ fields:['1 文本输入 · 文本 · <1000字 · 手工输入','2 问题列表 · 文本 · TOP问题 · 数据库','3 问题生成 · 提取关键词 · <20个 · 知识图谱图数据库','4 知识图谱实体 · 表格 · — · 知识图谱图数据库','5 图谱可视化 · 图表 · — · 知识图谱图数据库','6 维修建议 · 文本 · TOP-3建议 · 知识图谱图数据库']},
+novice:{desc:'新手模式 SOP：帮助新手了解和熟悉维修步骤和流程的引导式交互页面。选择新手模式，输入设备名称，在设备故障知识库中进行索引（检索不到设备则显示无该设备）。进入设备诊断页面，显示该设备 TOP-20 的故障字段。选择字段进行诊断，显示故障原因（TOP-5），再选择一个故障原因切换到解决措施（TOP-5），选择一个解决措施后显示维修步骤（TOP-10）。',
+ inter:['1 新手模式 · 按钮 · 单击 → 切换到新手模式（高亮蓝色）','2 文本 · 按钮 · 单击 → 切换到新手模式（高亮蓝色）〔PRD 原文如此〕','3 请输入设备名称 · 文本 · Enter键 → 跳转设备诊断页面','4 开始诊断 · 按钮 · 单击 → 显示下方故障原因','5 故障原因列表 · 文本/按钮 · 单击 → 下一步解决措施','6 解决措施列表 · 文本/按钮 · 单击 → 下一步维护步骤','7 返回 · 按钮 · 单击 → 返回上一步','8 退出 · 按钮 · 单击 → 退出全部内容','9 故障原因 · 按钮 · 单击 → 显示故障原因内容（高亮蓝色）','10 解决措施 · 按钮 · 单击 → 显示解决措施内容（高亮蓝色）','11 维护步骤 · 按钮 · 单击 → 显示维护步骤内容（高亮蓝色）'],
+ fields:['1 故障报警码 · 标签 · TOP20 · 数据库','2 故障原因列表 · 文本 · Top5 的原因 · 数据库','3 解决措施 · 文本 · Top5 的步骤 · 数据库','4 维修步骤 · 文本 · Top10 的步骤 · 数据库']},
+datasrc:{desc:'数据源管理分为两块：一块是非结构化的文本文件（通过手工上传的文件），第二块是结构化的系统数据——通过 API 接口同步过来的数据（PHM 预测性维护系统、EAM 设备资产管理系统等，以及增量保存的互联网生成的问答知识库数据）。该模块用于管理相关数据源，进行数据源的命名和管理，便于后面 Schema 定义、知识抽取、知识图谱构建。文件管理包含文件上传、文件基础信息命名、文件编辑；API 接口管理包含 API 接口命名、拉取地址、定时同步时间等。',
+ inter:['1 文件夹管理 · TAB页按钮 · 单击 → 切换到当前页面（高亮蓝色）','2 API接口管理 · TAB页按钮 · 单击 → 切换到当前页面（高亮蓝色）','3 上传文件 · 按钮 · 单击 → 弹窗到文件上传页面，上传文件','4 批量上传 · 按钮 · 单击 → 弹窗到文件上传页面，批量上传文件','5 保存 · 按钮 · 文件上传保存 → 填写基础信息，上传文件保存（保存成功返回主页，形成一个记录）','6 取消 · 按钮 · 文件上传取消 → 取消','7 API接口新建 · 按钮 · 单击 → 弹窗','8 API接口信息填写保存 · 按钮 · 单击 → 保存 API 接口信息（形成 API 接口信息记录）'],
+ omit:'数据字段说明（省略，见原型）——PRD 原文'},
+prompt:{desc:'新建提示词，建立提示词模板，用于抽取 Schema、知识图谱、问答生成的模板。点击新建提示词，弹窗跳转到新建页面，填写提示词名称、类型、提示词内容，进行保存，生成一条提示词记录。然后对提示词进行启用，提示词就可以被 Schema、知识图谱构建、LLM 问答时使用。启用后不能直接删除，必须在禁用后才能删除。',
+ omit:'交互说明和数据说明（省略）——PRD 原文'},
+schema:{desc:'Schema 定义通过建立基础信息，选择提示词和相关的文件，手动建立和自动抽取（人工复核），然后设备专家进行审批，之后才能进行 Schema 的使用。新建方式有两种：手动模式、自动抽取模式，建议选择自动模式。手动模式对于比较熟悉的设备实体信息比较好可以使用；自动抽取是选择文件和提示词进行 Schema 抽取，然后对实体类型、关系、三元组进行审核和编辑的过程。新建好 Schema 后进行审批流程，设备专家/管理人员进行审核，完成审核的可以进行发布，在知识图谱抽取就可以直接使用。Schema 完成新建后为草稿状态，可进行审批/审批中/已审批，发布/已发布，废弃几种状态。',
+ inter:['1 新建Schema · 按钮 · 单击 → 弹窗新建页面','2 Schema · 按钮 · 保存 → 保存 Schema 信息','3 审批 · 按钮 · 单击 → 选择一条已经完成的 Schema 进行审批','4 发布 · 按钮 · 单击 → 状态显示审批完成，就可以进行发布，发布完成为已发布','5 废弃 · 按钮 · 单击 → 对一条进行废除，如果需要启用需要重新审批','6 文件/API接口 · Tab/按钮 · 单击 → 选择内容（自动构建 Schema）','7 文件/api接口 · 树状结构 · 可以被拖动','8 查看 · 按钮 · 单击 → 跳转到实体-关系-三元组详细页面（自动构建）'],
+ omit:'数据字段说明（略）——PRD 原文'},
+kg:{desc:'知识图谱构建类似于 Schema 构建和自动抽取：新建知识图谱，填写基础信息（图谱名称、编码、业务域、版本、标签等）进行保存成记录。然后在记录中选择构建图谱，跳转到子页面进行图谱的构建。图谱构建页面选择需要构建图谱的文件/API接口名称，选择 Schema，选择提示词，然后进行抽取。显示抽取进度，完成后可以查看图谱和编辑图谱，以及显示提取的文本信息。构建图谱完成后为草稿，需要进行审批（审批中/已审批），审批完成后进行发布（已发布），停用后需要重新审批。启用后就可以被 RAG 检索，进行问答，生成比较精准的答案。知识图谱分为三块：一块是新建，一块是图谱构建，一块是图谱查看和编辑构建。',
+ omit:'交互说明和数据说明（省略）——PRD 原文'},
+kb:{desc:'维修知识库是问答形成的，以及按照固定格式上传形成的。包含设备名称、编码、设备部件、故障名称、故障原因、维修建议等等，同时包含上传时间、上传人名字等。显示为视图模式和图表模式（两类），可以根据设备、部件、设备故障等内容进行查询和检索。',
+ omit:'交互说明和数据说明——PRD 未提供明细表'},
+gg:{desc:'构建的全部知识图谱显示图，全局图谱内容可视化。显示节点总数、关系总数、实体总数、三元组数量。节点类型、关系类型显示。然后可以对设备、部件、关系、实体等内容进行查询，显示图谱。',
+ omit:'交互说明和数据说明——PRD 未提供明细表'}
+};
+/* 区块级标注：标题 + 所在区块；气泡统一附本页 PRD 全量表格 */
 const SPECS={
 qa:[
- {t:'三种问答模式',d:'问答/检索模式包含存量问答/检索和增量问答/检索模式（PRD 4.1.1）。类似 DeepSeek、豆包、元宝这些产品操作交互逻辑，输入问题，进行问答，进行知识图谱检索和内容生成，形成会话历史记录。检索模式：输入问题，自动检索故障知识图谱里面的相关内容，生成案例详情（故障现场-原因分析-处理措施-处理结果），左侧显示图谱信息，相似案例的可信度90%；检索不到历史知识库中的相关内容时，单向路由在互联网上进行检索，根据提示词生成相关答案，人工审核进行保存，形成维修数据库。',api:['1 问答模式 · 按钮 · 单击 → 切换到问答模式（高亮蓝色）','2 检索模式 · 按钮 · 单击 → 切换到检索模式（高亮蓝色）','3 新手模式 · 按钮 · 单击 → 切换到新手模式（高亮蓝色）'],sel:'#qaWrap .mode-seg'},
- {t:'会话历史与列表',d:'问答过程形成会话历史记录，支持会话的添加与折叠总览。',api:['7 会话历史总览 · 添加/折叠 · 单击 → 自动添加会话/收起会话','8 会话（列表） · 按钮 · 单击 → 弹窗显示（重命名、置顶、分享、多选、删除）'],sel:'.qa-wrap .sess'},
- {t:'推荐问题',d:'TOP-3 高频故障问题，选中后直接进行问答，不需要输入。',api:['6 机器人故障有哪些（top-3 故障） · 按钮 · 单击 → 选中后，在模式中直接进行问答，不需要输入'],sel:'#qaWrap .rec-qs'},
- {t:'文本与图片输入',d:'支持文本与图片输入（PRD 页面说明：文本、图片按钮）。',api:['4 文本 · 按钮 · 单击','5 图片 · 按钮 · 单击','字段说明：文本输入 · 文本 · <1000字 · 手工输入'],sel:'#qaWrap .comp-card'},
- {t:'AI 回答与维修建议',d:'问答模式中，需要展示知识图谱生成的细节：提取的关键词标签、所检索的知识图谱实体、图谱可视化、历史关联案例、维修建议 TOP-3 内容+可信度。维修建议生成后可以选择保存。',api:['9 维修建议保存 · 按钮 · 单击 → 选择维修建议进入会话中','10 会话中保存 · 按钮 · 单击 → 保存至维修历史库中','字段说明：问题生成 · 提取关键词 · <20个 · 知识图谱图数据库','字段说明：知识图谱实体 / 图谱可视化 · 表格 / 图表 · 知识图谱图数据库','字段说明：维修建议 · TOP-3 建议 · 知识图谱图数据库'],sel:'#qaScroll'},
- {t:'新手模式引导',d:'新手模式 SOP：帮助新手了解和熟悉维修步骤和流程的引导式交互页面。选择新手模式，输入设备名称，在设备故障知识库中进行索引（检索不到设备则显示无该设备）；显示该设备 TOP-20 的故障字段，选择字段进行诊断，显示故障原因（TOP-5），再选择一个故障原因切换到解决措施（TOP-5），选择一个解决措施后显示维修步骤（TOP-10）。',api:['3 请输入设备名称 · 文本 · Enter键 → 跳转设备诊断页面','4 开始诊断 · 按钮 · 单击 → 显示下方故障原因','5 故障原因列表 · 文本/按钮 · 单击 → 下一步解决措施','6 解决措施列表 · 文本/按钮 · 单击 → 下一步维护步骤','7 返回 · 按钮 · 单击 → 返回上一步','8 退出 · 按钮 · 单击 → 退出全部内容','字段说明：故障报警码 · 标签 · TOP20 · 数据库','字段说明：维修步骤 · 文本 · TOP-10 步骤 · 数据库'],sel:'.ns-hero,.ns-panel'}
+ {t:'问答模式工作区',sel:'#qaScroll'},
+ {t:'会话历史与列表',sel:'.qa-wrap .sess'},
+ {t:'推荐问题（TOP-3）',sel:'#qaWrap .rec-qs'},
+ {t:'文本与图片输入',sel:'#qaWrap .comp-card'}
+],
+novice:[
+ {t:'新手模式引导',sel:'.ns-hero,.ns-panel'}
 ],
 datasrc:[
- {t:'双类型数据源',d:'数据源管理分为两块：一块是非结构化的文本文件（通过手工上传的文件），第二块是结构化的系统数据——通过 API 接口同步过来的数据（PHM 预测性维护系统、EAM 设备资产管理系统等，以及增量保存的互联网生成的问答知识库数据）。该模块用于管理相关数据源，进行数据源的命名和管理，便于后面 Schema 定义、知识抽取、知识图谱构建。',api:['1 文件夹管理 · TAB页按钮 · 单击 → 切换到当前页面（高亮蓝色）','2 API接口管理 · TAB页按钮 · 单击 → 切换到当前页面（高亮蓝色）'],sel:'#dsTabs'},
- {t:'文件与接口管理操作',d:'文件管理包含文件上传、文件基础信息命名、文件编辑；API 接口管理同样如此，包含 API 接口命名、拉取地址、定时同步时间等。',api:['3 上传文件 · 按钮 · 单击 → 弹窗到文件上传页面，上传文件','4 批量上传 · 按钮 · 单击 → 弹窗到文件上传页面，批量上传文件','5 保存 · 文件上传保存 → 填写基础信息，上传文件保存；保存成功返回主页，形成一个记录','6 取消 · 文件上传取消 → 取消','7 API接口新建 · 按钮 · 单击 → 弹窗','8 API接口信息填写保存 · 单击 → 保存 API 接口信息，形成 API 接口信息记录'],sel:'#dsFilePane .toolbar'}
+ {t:'文件 / API 接口管理',sel:'#dsTabs'},
+ {t:'数据源操作区',sel:'#dsFilePane .toolbar'}
 ],
 prompt:[
- {t:'提示词新建',d:'新建提示词：点击新建提示词，弹窗跳转到新建页面，填写提示词名称、类型、提示词内容，进行保存，生成一条提示词记录。建立提示词模板，用于 Schema 抽取、知识图谱、问答生成的模板。'},
- {t:'启用状态约束',d:'生成提示词记录后，对提示词进行启用，提示词就可以被 Schema、知识图谱构建、LLM 问答时使用。启用后不能直接删除，必须在禁用后才能删除。',sel:'#scr-prompt .tbl-wrap'}
+ {t:'提示词管理',sel:'#scr-prompt .tbl-wrap'}
 ],
 schema:[
- {t:'Schema 新建与状态',d:'Schema 定义通过建立基础信息，选择提示词和相关的文件，手动建立和自动抽取（人工复核），然后设备专家进行审批，之后才能进行 Schema 的使用。新建方式有两种：手动模式、自动抽取模式，建议选择自动模式。Schema 完成新建后为草稿状态，可进行 审批/审批中/已审批、发布/已发布、废弃 几种状态。',api:['1 新建Schema · 按钮 · 单击 → 弹窗新建页面','2 Schema · 按钮 · 保存 → 保存 Schema 信息'],sel:'#schList .toolbar'},
- {t:'审批 / 发布 / 废弃',d:'新建好 Schema 后进行审批流程，设备专家/管理人员进行审核，完成审核的可以进行发布，在知识图谱抽取就可以直接使用。',api:['3 审批 · 按钮 · 单击 → 选择一条已经完成的 Schema 进行审批','4 发布 · 按钮 · 单击 → 状态显示审批完成，就可以进行发布，发布完成为已发布','5 废弃 · 按钮 · 单击 → 对一条进行废除，如果需要启用需要重新审批','8 查看 · 按钮 · 单击 → 跳转到实体-关系-三元组详细页面'],sel:'#schList .tbl-wrap'}
+ {t:'Schema 列表与状态机',sel:'#schList .tbl-wrap'}
 ],
 'schema-detail':[
- {t:'实体-关系-三元组维护',d:'Schema 手动建立模式：实体类型建立、关系类型建立（Tab 页切换到关系）、实体新建 / 导入实体、三元组新建。',api:['8 查看 · 按钮 · 单击 → 跳转到实体-关系-三元组详细页面'],sel:'#schTabs'},
- {t:'手动 / 自动两种模式',d:'手动模式对于比较熟悉的设备实体信息比较好可以使用。自动抽取是选择文件和提示词进行 Schema 抽取，然后对实体类型、关系、三元组进行审核和编辑的过程。',api:['6 文件/API接口 · Tab/按钮 · 单击 → 选择内容（自动构建 Schema）','7 文件/api接口 · 树状结构 · 可以被拖动'],sel:'#schTabBox'},
- {t:'审批后投入使用',d:'设备专家/管理人员进行审核，完成审核的可以进行发布，在知识图谱抽取中直接使用。',sel:'#schDetail .acts'}
+ {t:'实体-关系-三元组维护',sel:'#schTabs'}
 ],
 'schema-ext':[
- {t:'数据源选择',d:'自动抽取模式：选择文件和提示词进行 Schema 抽取。',api:['6 文件/API接口 · Tab/按钮 · 单击 → 选择内容（自动构建 Schema）','7 文件/api接口 · 树状结构 · 可以被拖动'],sel:'#schExtract .src-tree'},
- {t:'抽取与人工复核',d:'自动抽取（人工复核）：抽取完成后对实体类型、关系、三元组进行审核和编辑的过程。',sel:'#schExtract .prog-card'}
+ {t:'自动抽取',sel:'#schExtract .prog-card'}
 ],
 kg:[
- {t:'知识图谱新建',d:'新建知识图谱，填写基础信息（图谱名称、编码、业务域、版本、标签等）进行保存成记录。知识图谱分为三块：一块是新建，一块是图谱构建，一块是图谱查看和编辑构建。'},
- {t:'构建入口与状态流转',d:'在记录中选择构建图谱，跳转到子页面进行图谱的构建。构建图谱完成后为草稿，需要进行审批（审批中/已审批），审批完成后进行发布（已发布），停用后需要重新审批。启用后就可以被 RAG 检索，进行问答，生成比较精准的答案。',sel:'#kgList .tbl-wrap'}
+ {t:'知识图谱列表',sel:'#kgList .tbl-wrap'}
 ],
 'kg-build':[
- {t:'构建要素选择',d:'图谱构建页面选择需要构建图谱的文件/API接口名称，选择 Schema，选择提示词，然后进行抽取。',sel:'#kgBuild .src-tree'},
- {t:'抽取进度',d:'显示抽取进度，完成后可以查看图谱和编辑图谱。',sel:'#kgBuild .prog-card'}
+ {t:'图谱构建',sel:'#kgBuild .prog-card'}
 ],
 'kg-view':[
- {t:'图谱查看与编辑',d:'抽取完成后可以查看图谱和编辑图谱。',sel:'#gvCanvasWrap'},
- {t:'提取文本信息',d:'显示提取的文本信息。',sel:'#gvTextPane'}
+ {t:'图谱查看与编辑',sel:'#gvCanvasWrap'},
+ {t:'提取文本信息',sel:'#gvTextPane'}
 ],
 kb:[
- {t:'查询与检索',d:'维修知识库是问答形成的，以及按照固定格式上传形成的。包含设备名称、编码、设备部件、故障名称、故障原因、维修建议等等，同时包含上传时间、上传人名字等。可以根据设备、部件、设备故障等内容进行查询和检索。',sel:'.kb-filter'},
- {t:'视图与图表模式',d:'显示为视图模式和图表模式（两类）。',sel:'#kbTabCard'}
+ {t:'维修知识库',sel:'.kb-filter'}
 ],
 gg:[
- {t:'全局图谱统计',d:'显示节点总数，关系总数，实体总数，三元组数量。',sel:'#scr-gg .gg-stats'},
- {t:'节点与关系类型',d:'节点类型、关系类型显示。',sel:'#scr-gg .gg-legend-bar'},
- {t:'全局图谱可视化',d:'构建的全部知识图谱显示图，全局图谱内容可视化。然后可以对设备、部件、关系、实体等内容进行查询，显示图谱。',sel:'#scr-gg .gg-canvas-big'}
+ {t:'全局图谱可视化',sel:'#scr-gg .gg-canvas-big'}
 ]
 };
 const SPEC={
@@ -3052,10 +3068,11 @@ const SPEC={
     this.on=!this.on;
     const b=$('#specBtn');if(b)b.classList.toggle('on',this.on);
     this.apply();
-    toast(this.on?'功能说明标注已开启：点击编号查看 PRD 说明':'功能说明标注已关闭',this.on?'ok':'info');
+    toast(this.on?'功能说明标注已开启：点击编号查看 PRD 原文说明':'功能说明标注已关闭',this.on?'ok':'info');
   },
   key(){
     const c=App.cur||'qa';
+    if(c==='qa')return $('#composer').style.display==='none'?'novice':'qa';
     if(c==='schema')return $('#schDetail').style.display!=='none'?'schema-detail':($('#schExtract').style.display!=='none'?'schema-ext':'schema');
     if(c==='kg')return $('#kgBuild').style.display!=='none'?'kg-build':($('#kgView').style.display!=='none'?'kg-view':'kg');
     return c;
@@ -3087,17 +3104,20 @@ const SPEC={
   },
   showPop(sp,dot){
     this.hidePop();this.popOpen=true;
+    const tb=PRTAB[this.key()]||{};
+    let html=`<b><span class="spec-n">${dot.textContent}</span>${sp.t}</b><p>${tb.desc||''}</p>`;
+    if(tb.inter)html+=`<div class="sp-div"><span class="sp-lab">数据交互说明 · PRD 原文</span><div class="sp-rows">${tb.inter.map(r=>`<div class="sp-row">${r}</div>`).join('')}</div></div>`;
+    if(tb.fields)html+=`<div class="sp-div"><span class="sp-lab">数据字段说明 · PRD 原文</span><div class="sp-rows">${tb.fields.map(r=>`<div class="sp-row">${r}</div>`).join('')}</div></div>`;
+    if(tb.omit)html+=`<div class="sp-omit">${tb.omit}</div>`;
+    html+=`<div class="sp-x" onclick="SPEC.hidePop()">${ic('close','ic xs')}</div>`;
     const p=document.createElement('div');
-    p.className='spec-pop';p.id='specPop';
-    p.innerHTML=`<b><span class="spec-n">${dot.textContent}</span>${sp.t}</b><p>${sp.d}</p>`
-      +(sp.api&&sp.api.length?`<div class="sp-div"><span class="sp-lab">数据交互说明 · PRD 原文</span><div class="sp-rows">${sp.api.map(r=>`<div class="sp-row">${r}</div>`).join('')}</div></div>`:'')
-      +`<div class="sp-x" onclick="SPEC.hidePop()">${ic('close','ic xs')}</div>`;
+    p.className='spec-pop';p.id='specPop';p.innerHTML=html;
     document.body.appendChild(p);
     const pw=336,ph=p.offsetHeight||130,vw=innerWidth,vh=innerHeight;
     let x=dot.offsetLeft+30,y=dot.offsetTop-10;
     if(x+pw>vw-12)x=dot.offsetLeft-pw-14;
     if(x<12)x=12;
-    if(y+ph>vh-12)y=vh-ph-12;
+    if(y+ph>vh-12)y=Math.max(12,vh-ph-12);
     if(y<12)y=12;
     p.style.left=x+'px';p.style.top=y+'px';
   }
